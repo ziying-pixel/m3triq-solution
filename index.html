@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M3TRIQ – AI Molecular Design Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #050816;
+        --card: rgba(15, 23, 42, 0.92);
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.45);
+        --text-main: #e5e7eb;
+        --text-muted: #9ca3af;
+        --border: rgba(148, 163, 184, 0.25);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Inter', sans-serif;
+        background: radial-gradient(circle at top, #1d2333 0, #050816 55%, #020617 100%);
+        color: var(--text-main);
+        min-height: 100vh;
+        padding: 40px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-x: hidden;
+    }
+    .scene {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        z-index: -1;
+        pointer-events: none;
+    }
+    .orb {
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(56,189,248,0.3), transparent 60%);
+        filter: blur(4px);
+        animation: float 22s infinite alternate ease-in-out;
+    }
+    .orb:nth-child(1) { top: -40px; left: -60px; }
+    .orb:nth-child(2) { bottom: -80px; right: -40px; animation-delay: 3s; }
+    .orb:nth-child(3) { top: 40%; right: 20%; width: 180px; height: 180px; animation-delay: 6s; }
+
+    @keyframes float {
+        0% { transform: translate3d(0,0,0); opacity: 0.8; }
+        100% { transform: translate3d(40px,-40px,0) scale(1.1); opacity: 0.4; }
+    }
+
+    .container {
+        width: 100%;
+        max-width: 1040px;
+        background: radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 55%),
+                    radial-gradient(circle at bottom right, rgba(147,51,234,0.16), transparent 60%),
+                    linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.98));
+        border-radius: 26px;
+        border: 1px solid rgba(148,163,184,0.35);
+        box-shadow:
+            0 28px 80px rgba(15,23,42,0.85),
+            0 0 0 1px rgba(15,23,42,0.9);
+        padding: 34px 30px 36px;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(18px);
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+        gap: 32px;
+    }
+    @media (max-width: 860px) {
+        .grid { grid-template-columns: 1fr; }
+        .container { padding: 26px 20px 30px; }
+    }
+
+    .logo-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+    .logo-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: conic-gradient(from 210deg, #38bdf8, #a855f7, #f97316, #38bdf8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 26px rgba(56,189,248,0.7);
+        position: relative;
+        overflow: hidden;
+    }
+    .logo-mark::after {
+        content: "";
+        position: absolute;
+        inset: 2px;
+        border-radius: 12px;
+        background: radial-gradient(circle at 30% 0, rgba(248,250,252,0.65), transparent 55%);
+        opacity: 0.18;
+    }
+    .logo-letter {
+        position: relative;
+        font-weight: 700;
+        color: #0b1120;
+        font-size: 20px;
+        letter-spacing: 1px;
+    }
+    .logo-text-title {
+        font-size: 22px;
+        font-weight: 600;
+    }
+    .logo-text-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    h1 {
+        font-size: 32px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .badge {
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,0.5);
+        background: radial-gradient(circle at top, rgba(56,189,248,0.22), transparent 55%);
+        color: #e5e7eb;
+    }
+    .lead {
+        font-size: 15px;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+
+    .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .pill {
+        font-size: 11px;
+        padding: 5px 11px;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,0.5);
+        color: #e5e7eb;
+        background: radial-gradient(circle at top left, rgba(56,189,248,0.27), transparent 60%);
+    }
+
+    .section-title {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+    }
+    .section-text {
+        font-size: 14px;
+        color: var(--text-main);
+        margin-bottom: 16px;
+    }
+    .section-text small { color: var(--text-muted); }
+
+    .card {
+        background: var(--card);
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        padding: 16px 18px;
+        margin-bottom: 12px;
+        box-shadow:
+            0 18px 40px rgba(15,23,42,0.85),
+            0 0 0 1px rgba(15,23,42,1);
+        transform: perspective(800px) rotateX(8deg);
+        transform-origin: top;
+        animation: cardFloat 16s infinite alternate ease-in-out;
+    }
+    @keyframes cardFloat {
+        0% { transform: perspective(800px) rotateX(10deg) translateY(0); }
+        100% { transform: perspective(800px) rotateX(4deg) translateY(-8px); }
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 8px;
+    }
+    .card-title {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--text-muted);
+    }
+    .chip {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(34,197,94,0.13);
+        border: 1px solid rgba(34,197,94,0.6);
+        color: #bbf7d0;
+    }
+    .stack-list {
+        list-style: none;
+        font-size: 13px;
+        color: var(--text-main);
+    }
+    .stack-list li {
+        margin-bottom: 4px;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+    .stack-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent-soft);
+        margin-top: 6px;
+    }
+
+    .cta-row {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .btn-primary {
+        font-size: 13px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(56,189,248,0.9);
+        background: radial-gradient(circle at 20% 0, rgba(248,250,252,0.16), transparent 55%),
+                    linear-gradient(135deg, #0ea5e9, #22c55e);
+        color: #0b1120;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 12px 30px rgba(56,189,248,0.5);
+        cursor: pointer;
+    }
+    .btn-primary span.icon {
+        font-size: 15px;
+    }
+    .btn-ghost {
+        font-size: 13px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,0.45);
+        background: rgba(15,23,42,0.7);
+        color: var(--text-main);
+        text-decoration: none;
+    }
+
+    .footer {
+        margin-top: 26px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(30,64,175,0.7);
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .wire {
+        position: absolute;
+        width: 200%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(56,189,248,0.7), transparent);
+        top: 18%;
+        left: -50%;
+        opacity: 0.5;
+        transform: translate3d(0,0,0);
+        animation: scan 14s linear infinite;
+    }
+    @keyframes scan {
+        0% { transform: translate3d(-20%,0,0); }
+        100% { transform: translate3d(20%,0,0); }
+    }
+</style>
+</head>
+<body>
+<div class="scene">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+</div>
+
+<div class="container">
+    <div class="wire"></div>
+
+    <div class="grid">
+        <!-- 左侧：文案 + 按钮 -->
+        <div>
+            <div class="logo-row">
+                <div class="logo-mark">
+                    <div class="logo-letter">M3</div>
+                </div>
+                <div>
+                    <div class="logo-text-title">M3TRIQ</div>
+                    <div class="logo-text-sub">AI-Driven Molecular Design Engine</div>
+                </div>
+            </div>
+
+            <h1>Accelerating molecular design with AI-native workflows on Google Cloud.</h1>
+
+            <div class="badge-row">
+                <div class="badge">Biodesign & Biomanufacturing</div>
+                <div class="badge">Protein–Ligand Simulation</div>
+                <div class="badge">Vertex AI & GPU Compute</div>
+            </div>
+
+            <p class="lead">
+                M3TRIQ turns natural language into executable molecular design pipelines, enabling rapid
+                protein–ligand simulation and biomaterial discovery for biomanufacturing, cellular agriculture,
+                and therapeutic innovation across emerging markets.
+            </p>
+
+            <div class="pill-row">
+                <div class="pill">LLM-guided molecular reasoning</div>
+                <div class="pill">Generative ligand design</div>
+                <div class="pill">High-throughput docking & ranking</div>
+                <div class="pill">Secure biomolecular data lake</div>
+            </div>
+
+            <div class="section-title">Solution overview</div>
+            <p class="section-text">
+                The M3TRIQ engine integrates large language models, structural bioinformatics, and generative
+                molecular modeling to cut simulation cycles from hours to minutes. Researchers can describe
+                design intent in plain English, while the platform orchestrates structure prediction, ligand
+                generation, docking, and multi-parameter optimization on Google Cloud.
+            </p>
+
+            <div class="cta-row">
+                <!-- 把 href 换成你最终的 PDF 链接或保持相对路径 -->
+                <a class="btn-primary" href="M3TRIQ_Whitepaper.pdf" target="_blank">
+                    <span class="icon">⬇</span><span>Download whitepaper (PDF)</span>
+                </a>
+                <a class="btn-ghost" href="https://m3triq.xyz" target="_blank">
+                    Visit main website
+                </a>
+            </div>
+        </div>
+
+        <!-- 右侧：3D 样式的架构卡片 -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Google Cloud architecture</div>
+                    <div class="chip">Prototype on Vertex AI</div>
+                </div>
+                <ul class="stack-list">
+                    <li>
+                        <div class="stack-dot"></div>
+                        <div><strong>Vertex AI</strong> orchestrates LLM agents for molecular planning, property prediction, and sequence design.</div>
+                    </li>
+                    <li>
+                        <div class="stack-dot"></div>
+                        <div><strong>GPU-accelerated Compute Engine</strong> runs large-scale protein folding, docking, and simulation workloads.</div>
+                    </li>
+                    <li>
+                        <div class="stack-dot"></div>
+                        <div><strong>BigQuery</strong> powers analytics over biomolecular, assay, and simulation result datasets.</div>
+                    </li>
+                    <li>
+                        <div class="stack-dot"></div>
+                        <div><strong>Cloud Storage</strong> manages structure files, ligands, and model checkpoints with encrypted at-rest storage.</div>
+                    </li>
+                    <li>
+                        <div class="stack-dot"></div>
+                        <div><strong>Cloud Logging & IAM</strong> provide auditability and fine-grained access control across research teams.</div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section-title">Impact</div>
+            <p class="section-text">
+                By unifying AI-native molecular reasoning with scalable Google Cloud infrastructure, M3TRIQ aims
+                to democratize access to high-performance molecular design, lower R&amp;D barriers for emerging
+                biotech ecosystems, and enable more sustainable biomanufacturing pipelines.
+            </p>
+            <p class="section-text">
+                <small>Born in Malaysia, built for global biodesign teams.</small>
+            </p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>Company: M3TRIQ • Contact: ziying@m3triq.xyz</span>
+        <span>Powered by Google Cloud – Vertex AI, Compute Engine, BigQuery, Cloud Storage</span>
+    </div>
+</div>
+</body>
+</html>
